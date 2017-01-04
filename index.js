@@ -16,8 +16,9 @@ module.exports = function (ret, conf, settings, opt) {
     //根据配置，
     // 如果是pubType=pubvm时，移除 /page / 下面所有的配置
     // 如果是pubType=pubpage时，移除非 /page / 下面所有的配置
+    var pubType;
     if (settings && settings['pubType']) {
-        var pubType = settings['pubType'];
+        pubType = settings['pubType'];
         var res = mapContent['res'];
         switch (pubType) {
             case 'pubvm':
@@ -56,6 +57,7 @@ module.exports = function (ret, conf, settings, opt) {
     // url comb 处理
     var files = ret.src;
     var combSettings = settings['comb'];
+    combSettings['pubType'] = pubType ? pubType : '';
     var combo = new Combo(combSettings);
 
     // comb 处理

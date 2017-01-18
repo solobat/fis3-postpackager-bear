@@ -63,8 +63,8 @@ module.exports = function (ret, conf, settings, opt) {
     // comb 处理
     Object.keys(files).forEach(function (subpath) {
         var file = files[subpath];
-        var isPage = false;
-        if (file.isHtmlLike) {
+        var regPagePath = /^page\/(.*?)\.vm$/;
+        if (file.isHtmlLike && regPagePath.test(file.id)) {
             var fileId = file.id;
             var content = file.getContent();
             var globalStaticConf = {
@@ -72,25 +72,34 @@ module.exports = function (ret, conf, settings, opt) {
                 arrGlobalCss: []
             };
 
-            if (/^page\/(.*?)\.vm$/.test(fileId)) {
-                var regLayout = /#extends\(("|')(\/?page\/layout\/.*?)\.vm\1\)/;
-                var match = content.match(regLayout);
-                if (match) {
-                    var layoutFileId = match[2];
+            var isPage = true;
+            var regLayout = /#extends\(("|')(\/?page\/layout\/.*?)\.vm\1\s*(("|')var:tplType=("|')(.*?)\5\4)?(?:.*?)\)/;
+            var match = content.match(regLayout);
+            var isLayout = false;
+            if (match) {
+                var layoutFileId = match[2];
+                var tplTypePart = match[3];
+                var tplType = match[6];
+                if (tplTypePart && tplType === 'layout') {
+                    // 不是page，是继承其他layout的layout
+                    isPage = false;
                 }
-                if (layoutFileId) {
-                    isPage = true;
-                    // get layout_xx.conf.json
-                    var layoutConfFilePath = path.join(root, layoutFileId + '.conf.json');
-                    var json = fs.readFileSync(layoutConfFilePath, 'utf8');
-                    var layoutConf = JSON.parse(json);
-                    globalStaticConf = {
-                        arrGlobalJs: layoutConf['arrGlobalJs'],
-                        arrGlobalCss: layoutConf['arrGlobalCss']
-                    };
-                }
+            } else {
+                isPage = false;
             }
 
+            if (isPage && layoutFileId) {
+                // get layout_xx.conf.json
+                var layoutConfFilePath = path.join(root, layoutFileId + '.conf.json');
+                var json = fs.readFileSync(layoutConfFilePath, 'utf8');
+                var layoutConf = JSON.parse(json);
+                globalStaticConf = {
+                    arrGlobalJs: layoutConf['arrGlobalJs'],
+                    arrGlobalCss: layoutConf['arrGlobalCss']
+                };
+            }
+
+            console.info('file:%s,isPage:%s', fileId, isPage);
             var conf = {
                 isPage: isPage,
                 fileId: fileId,

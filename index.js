@@ -99,7 +99,7 @@ module.exports = function (ret, conf, settings, opt) {
                 };
             }
 
-            console.info('file:%s,isPage:%s', fileId, isPage);
+            // console.info('file:%s,isPage:%s', fileId, isPage);
             var conf = {
                 isPage: isPage,
                 fileId: fileId,
@@ -108,6 +108,8 @@ module.exports = function (ret, conf, settings, opt) {
             };
 
             content = combo.process(content, conf);
+            // #extends("/page/layout/common.vm") 被fis替换之后，变成#extends("page/layout/common.vm")，page之前的/被去掉了，需要重新加上
+            content = content.replace(/(#extends\((?:"|'))(page\/layout\/.*?\.vm)/, "$1/$2");
             file.setContent(content);
         }
     });

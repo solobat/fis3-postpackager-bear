@@ -15,34 +15,19 @@ module.exports = function (ret, conf, settings, opt) {
     var mapContent = ret.map;
     //根据配置，
     // 如果是pubType=pubvm时，移除 /page / 下面所有的配置
-    // 如果是pubType=pubpage时，移除非 /page / 下面所有的配置
     var pubType;
     if (settings && settings['pubType']) {
         pubType = settings['pubType'];
         var res = mapContent['res'];
-        switch (pubType) {
-            case 'pubvm':
-                for (var k in res) {
-                    var propObj = res[k];
-                    if (propObj['extras'] && propObj['extras']['isPage']) {
-                        //如果是页面类型，移除
-                        delete res[k];
-                    }
+        if (pubType === 'pubvm') {
+            for (var k in res) {
+                var propObj = res[k];
+                if (propObj['extras'] && propObj['extras']['isPage']) {
+                    //如果是页面类型，移除
+                    delete res[k];
                 }
-                mapContent = res;
-                break;
-            case 'pubpage':
-                for (var k in res) {
-                    var propObj = res[k];
-                    if (!propObj['extras'] || !propObj['extras']['isPage']) {
-                        //如果不是页面类型，移除
-                        delete res[k];
-                    }
-                }
-
-                break;
-            default:
-                break;
+            }
+            mapContent = res;
         }
     }
 
@@ -108,8 +93,10 @@ module.exports = function (ret, conf, settings, opt) {
             };
 
             content = combo.process(content, conf);
+
             // #extends("/page/layout/common.vm") 被fis替换之后，变成#extends("page/layout/common.vm")，page之前的/被去掉了，需要重新加上
             content = content.replace(/(#extends\((?:"|'))(page\/layout\/.*?\.vm)/, "$1/$2");
+
             file.setContent(content);
         }
     });
